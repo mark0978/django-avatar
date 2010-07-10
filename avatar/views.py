@@ -68,15 +68,7 @@ def _get_avatars(user):
         avatars = avatars[:AVATAR_MAX_AVATARS_PER_USER]
     return (avatar, avatars)    
 
-@login_required
-def add(request, extra_context=None, next_override=None,
-        upload_form=UploadAvatarForm, *args, **kwargs):
-    if extra_context is None:
-        extra_context = {}
-    avatar, avatars = _get_avatars(request.user)
-    upload_avatar_form = upload_form(request.POST or None,
-        request.FILES or None, user=request.user)
-    if request.method == "POST" and 'avatar' in request.FILES:
+def add_new_avatar(request, upload_avatar_form):
         if upload_avatar_form.is_valid():
             avatar = Avatar(
                 user = request.user,
@@ -89,6 +81,19 @@ def add(request, extra_context=None, next_override=None,
                 message=_("Successfully uploaded a new avatar."))
             if notification:
                 _notification_updated(request, avatar)
+        return True
+    return False
+
+@login_required
+def add(request, extra_context=None, next_override=None,
+        upload_form=UploadAvatarForm, *args, **kwargs):
+    if extra_context is None:
+        extra_context = {}
+    avatar, avatars = _get_avatars(request.user)
+    upload_avatar_form = upload_form(request.POST or None,
+        request.FILES or None, user=request.user)
+    if request.method == "POST" and 'avatar' in request.FILES:
+        if add_new_avatar(request, upload_avatar_form):
             return HttpResponseRedirect(next_override or _get_next(request))
     return render_to_response(
             'avatar/add.html',
@@ -113,7 +118,8 @@ def change(request, extra_context=None, next_override=None,
         kwargs = {'initial': {'choice': avatar.id}}
     else:
         kwargs = {}
-    upload_avatar_form = upload_form(user=request.user, **kwargs)
+    upload_avatar_form = upload_form(request.POST or None, request.FILES or None, 
+                                     user=request.user, )
     primary_avatar_form = primary_form(request.POST or None,
         user=request.user, avatars=avatars, **kwargs)
     if request.method == "POST":
@@ -128,6 +134,7 @@ def change(request, extra_context=None, next_override=None,
                 message=_("Successfully updated your avatar."))
         if updated and notification:
             _notification_updated(request, avatar)
+        add_new_avatar(request, upload_avatar_form)
         return HttpResponseRedirect(next_override or _get_next(request))
     return render_to_response(
         'avatar/change.html',
