@@ -69,18 +69,18 @@ def _get_avatars(user):
     return (avatar, avatars)    
 
 def add_new_avatar(request, upload_avatar_form):
-        if upload_avatar_form.is_valid():
-            avatar = Avatar(
-                user = request.user,
-                primary = True,
+    if upload_avatar_form.is_valid():
+        avatar = Avatar(
+            user = request.user,
+            primary = True,
             )
-            image_file = request.FILES['avatar']
-            avatar.avatar.save(image_file.name, image_file)
-            avatar.save()
-            request.user.message_set.create(
-                message=_("Successfully uploaded a new avatar."))
-            if notification:
-                _notification_updated(request, avatar)
+        image_file = request.FILES['avatar']
+        avatar.avatar.save(image_file.name, image_file)
+        avatar.save()
+        request.user.message_set.create(
+            message=_("Successfully uploaded a new avatar."))
+        if notification:
+            _notification_updated(request, avatar)
         return True
     return False
 
